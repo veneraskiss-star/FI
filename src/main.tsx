@@ -7,7 +7,7 @@ import {Sparkles,Settings2,LayoutDashboard,Users,FileText,Plus,Search,ArrowUpRig
 import * as Dialog from '@radix-ui/react-dialog';
 import {Button} from './components/ui/button';
 import './style.css';
-if(window.hub)document.documentElement.dataset.desktop='true';
+if(window.hub){document.documentElement.dataset.desktop='true';document.documentElement.dataset.theme=window.hub.theme.initial;}
 type Client={id:string;name:string;analyst:string;type:string;stage:string;health:string;state:string;risks:string;archived:number};
 type Task={id:string;clientId:string;title:string;owner:string;start:string;deadline:string;status:string;updatedAt:string};
 type Entry={id:string;clientId:string;title:string;type:string;date:string;body:string};
@@ -17,8 +17,8 @@ const date=(s:string)=>s?new Date(s+'T12:00:00').toLocaleDateString('ru-RU',{day
 function App(){
  const [catalogOpen,setCatalogOpen]=useState(false);const [catalog,setCatalog]=useState<Catalog>(defaultCatalog);
  const [meeting,setMeeting]=useState<string|null>(null);const [settings,setSettings]=useState(false);
- const [data,setData]=useState<{clients:Client[];tasks:Task[];activities:Entry[]}>({clients:[],tasks:[],activities:[]});const [page,setPage]=useState('Главная');const [selected,setSelected]=useState<string|null>(null);const [tab,setTab]=useState('Обзор');const [query,setQuery]=useState('');const [filter,setFilter]=useState('Все');const [archived,setArchived]=useState(false);const [taskFilter,setTaskFilter]=useState('Все задачи');const [menu,setMenu]=useState(false);const [modal,setModal]=useState<{kind:string;item?:any}|null>(null);const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [dark,setDark]=useState(()=>localStorage.getItem('hub-theme')==='dark');
- useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';localStorage.setItem('hub-theme',dark?'dark':'light');},[dark]);
+ const [data,setData]=useState<{clients:Client[];tasks:Task[];activities:Entry[]}>({clients:[],tasks:[],activities:[]});const [page,setPage]=useState('Главная');const [selected,setSelected]=useState<string|null>(null);const [tab,setTab]=useState('Обзор');const [query,setQuery]=useState('');const [filter,setFilter]=useState('Все');const [archived,setArchived]=useState(false);const [taskFilter,setTaskFilter]=useState('Все задачи');const [menu,setMenu]=useState(false);const [modal,setModal]=useState<{kind:string;item?:any}|null>(null);const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [dark,setDark]=useState(()=>window.hub?window.hub.theme.initial==='dark':localStorage.getItem('hub-theme')==='dark');
+ useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';if(window.hub){window.hub.theme.set(dark?'dark':'light').catch(()=>setError('Не удалось сохранить выбранную тему. Попробуйте ещё раз.'));}else{localStorage.setItem('hub-theme',dark?'dark':'light');}},[dark]);
  async function reload(){try{const [r,options]=await Promise.all([fetch('/api/data'),fetch('/api/options')]);if(!r.ok||!options.ok)throw Error('Не удалось загрузить данные');const [nextData,nextOptions]=await Promise.all([r.json(),options.json()]);setData(nextData);setCatalog(nextOptions.catalog);setError('');}catch(e){setError(String(e));}finally{setLoading(false);}}
  useEffect(()=>{reload();},[]);
  async function mutate(kind:string,body:any,id?:string,method?:string){setSaving(true);try{const r=await fetch('/api/'+kind+(id?'/'+id:''),{method:method||(id?'PATCH':'POST'),headers:{'Content-Type':'application/json'},body:method==='DELETE'?undefined:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.error);await reload();return true;}catch(e){setError(e instanceof Error?e.message:String(e));return false;}finally{setSaving(false);}}
