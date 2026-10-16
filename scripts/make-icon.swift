@@ -1,0 +1,16 @@
+import AppKit
+let image = NSImage(size:NSSize(width:1024,height:1024))
+image.lockFocus()
+let rect = NSRect(x:40,y:40,width:944,height:944)
+let shape = NSBezierPath(roundedRect:rect,xRadius:210,yRadius:210)
+NSGradient(starting:NSColor(calibratedRed:0.25,green:0.25,blue:0.25,alpha:1),ending:NSColor(calibratedRed:0.07,green:0.07,blue:0.07,alpha:1))!.draw(in:shape,angle:270)
+NSColor.white.withAlphaComponent(0.20).setFill()
+NSBezierPath(roundedRect:NSRect(x:230,y:350,width:564,height:360),xRadius:48,yRadius:48).fill()
+NSColor.white.withAlphaComponent(0.97).setFill()
+let folder = NSBezierPath()
+folder.move(to:NSPoint(x:230,y:370));folder.line(to:NSPoint(x:230,y:640));folder.curve(to:NSPoint(x:270,y:680),controlPoint1:NSPoint(x:230,y:668),controlPoint2:NSPoint(x:242,y:680));folder.line(to:NSPoint(x:405,y:680));folder.line(to:NSPoint(x:465,y:620));folder.line(to:NSPoint(x:754,y:620));folder.curve(to:NSPoint(x:794,y:580),controlPoint1:NSPoint(x:782,y:620),controlPoint2:NSPoint(x:794,y:608));folder.line(to:NSPoint(x:794,y:370));folder.curve(to:NSPoint(x:754,y:330),controlPoint1:NSPoint(x:794,y:342),controlPoint2:NSPoint(x:782,y:330));folder.line(to:NSPoint(x:270,y:330));folder.curve(to:NSPoint(x:230,y:370),controlPoint1:NSPoint(x:242,y:330),controlPoint2:NSPoint(x:230,y:342));folder.close();folder.fill()
+NSColor(calibratedRed:0.15,green:0.15,blue:0.15,alpha:1).setStroke()
+let check=NSBezierPath();check.lineWidth=24;check.lineCapStyle = .round;check.lineJoinStyle = .round;check.move(to:NSPoint(x:437,y:477));check.line(to:NSPoint(x:490,y:424));check.line(to:NSPoint(x:593,y:533));check.stroke()
+image.unlockFocus()
+let rep=NSBitmapImageRep(data:image.tiffRepresentation!)!
+try rep.representation(using:.png,properties:[:])!.write(to:URL(fileURLWithPath:CommandLine.arguments[1]))

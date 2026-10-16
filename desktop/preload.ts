@@ -1,0 +1,3 @@
+import {contextBridge,ipcRenderer} from 'electron';
+async function invoke(channel:string,...args:unknown[]){const r=await ipcRenderer.invoke(channel,...args);if(!r.ok)throw Error(r.error);return r.value;}
+contextBridge.exposeInMainWorld('hub',{desktop:true,status:()=>invoke('chat:status'),connect:(id?:string)=>invoke('chat:connect',id),cancel:()=>invoke('chat:cancel'),select:(id:string)=>invoke('chat:select',id),disconnect:()=>invoke('chat:disconnect'),models:()=>invoke('chat:models'),analyze:(input:unknown)=>invoke('chat:analyze',input),usage:()=>invoke('chat:usage'),dataFolder:()=>invoke('app:data')});

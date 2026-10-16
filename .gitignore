@@ -3,3 +3,9 @@ dist/
 data/
 *.sqlite*
 .DS_Store
+desktop-build/
+.desktop-stage/
+release/
+*.enc
+assets/preview-*.jpg
+assets/preview-*.png

@@ -1,10 +1,16 @@
+import {validDate} from '../shared/meeting.ts';
+import {installMeetingRoutes} from './meeting.ts';
 import express from 'express';
 import {randomUUID} from 'node:crypto';
 import {resolve} from 'node:path';
 import {openDatabase} from './db.ts';
-const db=openDatabase(process.env.DB_PATH||resolve('data/project-hub.sqlite'));
-const app=express(); app.use(express.json({limit:'1mb'}));
-app.use('/api',(req,res,next)=>{ const origin=req.headers.origin;if(origin && origin!==`http://127.0.0.1:${process.env.PORT||3000}` && origin!==`http://localhost:${process.env.PORT||3000}`)return res.status(403).json({error:'Недопустимый источник запроса'});next(); });
+export async function startServer(options:{dbPath?:string;port?:number;distPath?:string;secret?:string;production?:boolean}={}) {
+const db=openDatabase(options.dbPath||process.env.DB_PATH||resolve('data/project-hub.sqlite'));
+let allowedHost='';
+const app=express();
+app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');if(options.production??process.env.NODE_ENV==='production')res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");next();});
+app.use(express.json({limit:'1mb'}));
+app.use('/api',(req,res,next)=>{ const origin=req.headers.origin;if(req.headers.host!==allowedHost || (origin && origin!==`http://${allowedHost}`) || req.headers['sec-fetch-site']==='cross-site')return res.status(403).json({error:'Недопустимый источник запроса'});if(options.secret&&!req.headers.cookie?.split(';').some(c=>c.trim()===`hub_session=${options.secret}`))return res.status(403).json({error:'Откройте приложение Project Hub'});next(); });
 const fields={clients:['name','analyst','type','stage','health','state','risks','archived'],tasks:['clientId','title','owner','start','deadline','status'],activities:['clientId','type','date','title','body']} as const;
 const tables={clients:'Client',tasks:'Task',activities:'Activity'};
 app.get('/api/data',(_req,res)=>res.json({clients:db.prepare('SELECT * FROM Client ORDER BY createdAt DESC').all(),tasks:db.prepare('SELECT * FROM Task ORDER BY deadline').all(),activities:db.prepare('SELECT * FROM Activity ORDER BY date DESC,createdAt DESC').all()}));
@@ -32,10 +38,14 @@ function validate(kind:keyof typeof fields,b:any){
  if(kind==='clients'&&(!['По плану','Есть риски','Проблемы'].includes(b.health)||!['Presale','Upsale','Другое'].includes(b.type)))throw Error('Некорректное состояние или тип');
  if(kind==='tasks'&&!['Запланировано','В работе','Ожидание','Выполнено'].includes(b.status))throw Error('Некорректный статус');
  if(kind==='activities'&&!['Встреча','Звонок','Переписка','Изменение','Заметка'].includes(b.type))throw Error('Некорректный тип записи');
- for(const f of ['date','start','deadline'])if(b[f]&&(!/^\d{4}-\d{2}-\d{2}$/.test(b[f])||Number.isNaN(Date.parse(b[f]))))throw Error('Некорректная дата');
+ for(const f of ['date','start','deadline'])if(b[f]&&!validDate(b[f]))throw Error('Некорректная дата');
  if(kind==='activities'&&!b.date)throw Error('Укажите дату');if(b.start&&b.deadline&&b.start>b.deadline)throw Error('Начало позже срока');
 }
+installMeetingRoutes(app,db);
 app.use('/api',(_req,res)=>res.status(404).json({error:'Маршрут не найден'}));
 app.use((err:any,_req:any,res:any,_next:any)=>res.status(400).json({error:err.message||'Не удалось сохранить данные'}));
-if(process.env.NODE_ENV==='production'){app.use(express.static(resolve('dist')));app.get('/{*path}',(_req,res)=>res.sendFile(resolve('dist/index.html')));}else{const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}
-app.listen(Number(process.env.PORT||3000),'127.0.0.1',()=>console.log(`Project Hub: http://127.0.0.1:${process.env.PORT||3000}`));
+if(options.production??process.env.NODE_ENV==='production'){const root=options.distPath||resolve('dist');app.use(express.static(root));app.get('/{*path}',(_req,res)=>res.sendFile(resolve(root,'index.html')));}else{const {createServer}=await import('vite');const vite=await createServer({server:{middlewareMode:true},appType:'spa'});app.use(vite.middlewares);}
+const server=await new Promise<import('node:http').Server>((accept,reject)=>{const s=app.listen(options.port??Number(process.env.PORT||3000),'127.0.0.1',()=>accept(s));s.once('error',reject);});
+const port=(server.address() as import('node:net').AddressInfo).port;allowedHost=`127.0.0.1:${port}`;
+return {url:`http://${allowedHost}`,close:()=>new Promise<void>((accept,reject)=>{server.close(e=>{db.close();e?reject(e):accept();});server.closeAllConnections();})};
+}
