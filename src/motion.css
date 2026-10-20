@@ -1,0 +1,48 @@
+/* Interaction only: preserve the established resting geometry and palette. */
+.workspace-motion{animation:none}
+nav .nav.active:before{display:none}
+.nav-active-indicator{position:absolute;left:0;top:calc(50% - 8px);width:3px;height:16px;border-radius:3px;background:var(--text);pointer-events:none}
+.nav,.settings-link,.sidebar-shortcut{transition:background var(--motion-fast) var(--ease-standard),color var(--motion-fast) var(--ease-standard)}
+:where(svg.lucide){stroke-width:1.7}
+:where(button,a)>svg.lucide{flex-shrink:0;transform-origin:center;transition:transform var(--motion-ui) var(--ease-standard),opacity var(--motion-fast) var(--ease-standard)}
+@media(hover:hover) and (pointer:fine){
+ :where(button,a):not(:disabled):hover>svg.lucide-settings{transform:rotate(18deg)}
+ :where(button,a):not(:disabled):hover>svg.lucide-plus{transform:scale(1.08)}
+ :where(button,a):not(:disabled):hover>svg.lucide-arrow-up-right{transform:translate(1px,-1px)}
+ :where(button,a):not(:disabled):hover>svg.lucide-chevron-right{transform:translateX(1.5px)}
+ .sidebar-shortcut:not(:disabled):hover>svg.lucide-mail{transform:translateY(-1px)}
+}
+@media(prefers-reduced-motion:reduce){
+ :where(button,a)>svg.lucide{transition:none!important;transform:none!important}
+ .nav-active-indicator{transform:none!important}
+}
+/* Motion owns these properties; CSS must not animate the same surface. */
+.motion-dialog-content.dialog-content,.motion-dialog-content.dialog-content[data-state],.motion-dialog-overlay.dialog-overlay[data-state]{animation:none}
+.motion-dialog-content.dialog-content{translate:-50% -50%;transform:none}
+.motion-dialog-content[data-state=closed],.motion-dialog-overlay[data-state=closed]{pointer-events:none}
+.motion-chip{position:relative;isolation:isolate}.motion-chip.selected,[data-theme=dark] .motion-chip.selected{background:transparent}
+.chip-active-indicator{position:absolute;inset:0;z-index:-1;border-radius:inherit;background:#eaeaea;pointer-events:none}
+[data-theme=dark] .chip-active-indicator{background:#333}
+.client-table tbody td{transition:background var(--motion-fast) var(--ease-standard)}
+.client-table tbody tr>td:last-child svg{transition:transform var(--motion-ui) var(--ease-standard);transform-origin:center}
+.client-table tbody tr:hover>td:last-child svg,.client-table tbody tr:focus-within>td:last-child svg{transform:translateX(2px)}
+.client-table tbody tr:active>td{background:var(--soft)}
+.client-table .client-name:active{opacity:.75}
+@media(prefers-reduced-motion:reduce){.client-table tbody tr>td:last-child svg{transform:none!important}}
+
+[data-motion-reduced=true] *,[data-motion-reduced=true] *::before,[data-motion-reduced=true] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+[data-motion-reduced=true] :where(button,a)>svg.lucide,[data-motion-reduced=true] .client-table tbody tr>td:last-child svg{transform:none!important}
+
+.motion-dialog-content[data-exiting=true]{pointer-events:none}
+
+/* A single, restrained tilt; the existing semantic arrow/settings effects win. */
+@media(hover:hover) and (pointer:fine){
+ :where(button,a):not(:disabled):hover>:where(svg.lucide){transform:rotate(-6deg)}
+ .sidebar-shortcut-calendar:not(:disabled):hover>svg{transform:translateY(-.65px) rotate(-6deg)}
+}
+.startup-workspace{min-height:100dvh}
+.startup-screen{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:var(--bg);pointer-events:none;-webkit-app-region:drag}
+.startup-mark{display:block;width:240px;height:240px;object-fit:contain;user-select:none;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.startup-screen{display:none}.startup-workspace{opacity:1!important}}
+[data-motion-reduced=true] .startup-screen{display:none}
+[data-motion-reduced=true] .startup-workspace{opacity:1!important}

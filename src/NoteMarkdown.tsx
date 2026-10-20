@@ -1,0 +1,4 @@
+import Markdown from 'react-markdown';import remarkGfm from 'remark-gfm';
+// Only plain line breaks are accepted; all other raw HTML remains disabled.
+function cellBreaks(){return (tree:unknown)=>{function visit(node:any,inCell=false){const cell=inCell||node.type==='tableCell';if(node.type==='html'&&/^<br\s*\/?>$/i.test(node.value)){node.type='break';delete node.value;}node.children?.forEach((child:unknown)=>visit(child,cell));}visit(tree);};}
+export function NoteMarkdown({text,onOpen,inline=false}:{text:string;inline?:boolean;onOpen:(url:string)=>void}){return <Markdown remarkPlugins={[remarkGfm,cellBreaks]} allowedElements={inline?['strong','em','del','code','br']:undefined} unwrapDisallowed={inline} skipHtml components={{img:({alt})=><span className="note-image-label">Изображение{alt?' · '+alt:''}</span>,a:({href,children})=><a href={href} onClick={e=>{e.preventDefault();if(href)onOpen(href);}}>{children}</a>}}>{text}</Markdown>;}

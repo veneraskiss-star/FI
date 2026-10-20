@@ -6,7 +6,7 @@ import {taskStatuses} from '../shared/catalog.ts';
 import type {CatalogStore} from './catalog.ts';
 export function meetingContext(db:DatabaseSync,id:string,store:CatalogStore){
  const c=db.prepare('SELECT * FROM Client WHERE id=? AND archived=0').get(id) as any;if(!c)throw Error('Активный клиент не найден');
- return {clientId:c.id,name:c.name,state:c.state,risks:c.risks,stage:c.stage,type:c.type,analyst:c.analyst,health:c.health,updatedAt:c.updatedAt,catalog:store.get(),tasks:db.prepare('SELECT id,title,owner,deadline,status,updatedAt FROM Task WHERE clientId=? ORDER BY id').all(id),activities:db.prepare('SELECT id,date,type,title,body,updatedAt FROM Activity WHERE clientId=? ORDER BY date DESC,id').all(id)};
+ return {clientId:c.id,name:c.name,about:c.about,state:c.state,risks:c.risks,stage:c.stage,type:c.type,analyst:c.analyst,health:c.health,updatedAt:c.updatedAt,catalog:store.get(),tasks:db.prepare('SELECT id,title,owner,deadline,status,updatedAt FROM Task WHERE clientId=? ORDER BY id').all(id),activities:db.prepare('SELECT id,date,type,title,body,updatedAt FROM Activity WHERE clientId=? ORDER BY date DESC,id').all(id)};
 }
 export function contextVersion(context:unknown){return createHash('sha256').update(JSON.stringify(context)).digest('hex');}
 export function installMeetingRoutes(app:Express,db:DatabaseSync,store:CatalogStore){
@@ -20,6 +20,7 @@ export function installMeetingRoutes(app:Express,db:DatabaseSync,store:CatalogSt
  const catalog=store.get();const seen=new Set();const now=new Date().toISOString();
  for(const p of proposals as Proposal[]){
  if(!p||!Object.keys(proposalLabels).includes(p.kind)||['title','body','owner','deadline','source'].some(f=>typeof (p as any)[f]!=='string'||(p as any)[f].length>20000)||!p.title.trim()||(p.deadline&&!validDate(p.deadline)))throw Error('Некорректное предложение');
+ if(p.kind==='analyst')throw Error('Клиентами занимаетесь вы. Смена аналитика недоступна.');
  if(fieldKinds.includes(p.kind)){if(seen.has(p.kind))throw Error('Повторяющееся изменение поля');seen.add(p.kind);}
  if(p.kind==='task'){const status=p.status??'Запланировано';if(!taskStatuses.includes(status)||(p.owner&&!catalog.owners.includes(p.owner)))throw Error('Выберите статус и ответственного из вариантов');db.prepare('INSERT INTO Task(id,clientId,title,owner,deadline,status,createdAt,updatedAt,completedAt) VALUES(?,?,?,?,?,?,?,?,?)').run(randomUUID(),clientId,p.title,p.owner,p.deadline,status,now,now,status==='Выполнено'?now:null);}
  else if(p.kind==='activity'){const date=p.date??'';const type=p.activityType??catalog.activityTypes[0];if(typeof date!=='string'||(date&&!validDate(date))||!catalog.activityTypes.includes(type))throw Error('Проверьте дату и тип события');db.prepare('INSERT INTO Activity(id,clientId,type,date,title,body,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?)').run(randomUUID(),clientId,type,date,p.title,p.body,now,now);}

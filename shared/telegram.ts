@@ -1,0 +1,2 @@
+export function telegramUsername(value:unknown){if(typeof value!=='string')throw Error('Укажите Telegram: @username или https://t.me/username');const text=value.trim();if(!text)return '';const name=text.replace(/^https:\/\/t\.me\//i,'').replace(/^@/,'').replace(/\/$/,'');if(!/^[a-zA-Z][a-zA-Z0-9_]{3,31}$/.test(name))throw Error('Укажите Telegram: @username или https://t.me/username');return name;}
+export const telegramURL=(value:string)=>'https://t.me/'+telegramUsername(value);

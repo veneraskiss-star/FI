@@ -1,0 +1,1 @@
+export function LoadingSkeleton({label='Загружаем…',rows=3}:{label?:string;rows?:number}){return <div className="loading-skeleton" role="status" aria-label={label}><span className="sr-only">{label}</span>{Array.from({length:rows},(_,i)=><div className="skeleton-row" key={i} aria-hidden="true"><i/><div><span/><span/></div></div>)}</div>;}

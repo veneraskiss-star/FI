@@ -16,3 +16,11 @@ test('Сводка превращается в несколько событий
 test('Выдуманный этап не попадает в карточку и требует выбора пользователя',()=>{const result=parseAnalysis(JSON.stringify({proposals:[{...proposal,kind:'stage',body:'Несуществующий этап'}]}),'Подготовить план',context);assert.equal(result.proposals[0].body,'');assert.equal(result.proposals[0].selected,false);});
 
 test('Без даты написания текста относительные сроки не привязываются к сегодняшнему дню',()=>{const prompt=analysisPrompt('План пришлём завтра',context,'');assert.equal(JSON.parse(prompt.input[0].content).referenceDate,'');assert.ok(prompt.instructions.includes('Дата написания текста неизвестна'));assert.ok(prompt.instructions.includes('оставляй дату/срок пустыми'));});
+
+test('Общая информация о клиенте отделена от текущего состояния в предложениях',()=>{
+ const context={clientId:'c',name:'Тест',about:'Сеть магазинов',state:'Пилот',risks:'',updatedAt:'now',tasks:[]};
+ const source='Компания внедряет сборку заказов.';
+ const result=parseAnalysis(JSON.stringify({proposals:[{kind:'about',title:'О клиенте',body:'Сеть магазинов. Внедряет сборку заказов.',owner:'',deadline:'',source}]}),source,context);
+ assert.equal(result.proposals[0].kind,'about');assert.equal(result.proposals[0].selected,true);
+ const prompt=analysisPrompt(source,context,'');assert.ok(prompt.instructions.includes('Не переписывай about'));assert.equal(JSON.parse(prompt.input[0].content).context.about,'Сеть магазинов');
+});

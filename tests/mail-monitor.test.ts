@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {MailMonitor} from '../desktop/mail-monitor.ts';
+test('Mailbox change while busy retries instead of waiting for the minute fallback',async()=>{let busy=true,calls=0;const monitor=new MailMonitor({status:()=>({connected:true}),isBusy:()=>busy,sync:async()=>{calls++;return {connected:true};}});try{await monitor.tick();busy=false;await new Promise(r=>setTimeout(r,470));assert.equal(calls,1);}finally{monitor.stop();}});

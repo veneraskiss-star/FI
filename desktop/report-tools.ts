@@ -1,0 +1,3 @@
+import {writeFile} from 'node:fs/promises';
+export function clipboardText(value:unknown){if(typeof value!=='string'||value.length>200000)throw Error('Слишком большой текст');return value;}
+export async function saveMarkdown(input:{text:string;filename:string},choose:(filename:string)=>Promise<string|undefined>){if(!input||typeof input.text!=='string'||input.text.length>200000||typeof input.filename!=='string'||input.filename.length>200||/[\\/:]/.test(input.filename)||!input.filename.endsWith('.md'))throw Error('Проверьте файл отчёта');const path=await choose(input.filename);if(!path)return false;await writeFile(path,input.text,'utf8');return true;}

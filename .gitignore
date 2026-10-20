@@ -9,3 +9,19 @@ release/
 *.enc
 assets/preview-*.jpg
 assets/preview-*.png
+
+*.telegram-photos/
+
+# Local connections and private workspace data
+.env
+.env.*
+!.env.example
+*.options.json
+*.calendar.json
+*.mail.json
+*.drafts.json
+*.credentials.json
+*.pem
+*.key
+*.p12
+*.mobileprovision
